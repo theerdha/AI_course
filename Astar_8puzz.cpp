@@ -10,10 +10,12 @@ typedef struct STATE
 	int f_index;
 	int h_index;
 	int g_index;
-}state;
+}
+state;
 
 state GOAL;
 state INITIAL;
+priority_queue<int> PQ;
 
 void set_goal()
 {
@@ -93,6 +95,33 @@ bool verify_input(char in[][3])
 	return true;
 }
 
+bool possibility_checker(int i, char dir)
+{
+	switch(dir)
+	{
+
+	}
+}
+
+int getInvCount(char arr[])
+{
+    int inv_count = 0;
+    for (int i = 0; i < 9 - 1; i++)
+    {
+    	for (int j = i+1; j < 9; j++)
+    	{
+        	if (arr[j] != '-' && arr[i] != '-' &&  arr[i] - '0' > arr[j] - '0') inv_count++;
+        }
+    }
+    return inv_count;
+}
+ 
+bool isSolvable(char puzzle[3][3])
+{
+    
+    int invCount = getInvCount((char *)puzzle);
+    return (invCount%2 == 0);
+}
 
 
 int main()
@@ -111,6 +140,12 @@ int main()
 	if(!(verify_input(in))) 
 	{
 		cout << "invalid input" <<endl;
+		return 0;
+	}
+
+	if(!(isSolvable(in)))
+	{
+		cout << "not solvable" <<endl;
 		return 0;
 	}
 
