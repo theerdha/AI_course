@@ -25,13 +25,16 @@ state;
 
 void set_goal();
 bool goal_check(state* s);
-int set_h_index(char arr[][3]);
+int H1(char arr[][3]);
+int H2(char arr[][3]);
+int H3(char arr[][3]);
+int H4(char arr[][3]);
 bool possibility_checker(int i, int j);
 pair<int,int> find_dash(char arr[][3]);
-state * new_state(int x_,int y_,state * immparent);
+state * new_state(int x_,int y_,state * immparent,int (*H)(char[3][3]));
 int check_path(stack <state, vector<state > >path, char a[][3]);
-int ida_star(char arr[][3]);
-int search(stack <state, vector<state > > *path, int g, int *bound);
+int ida_star(char arr[][3],int (*H)(char[3][3]));
+int search(stack <state, vector<state > > *path, int g, int *bound,int (*H)(char[3][3]));
 int getInvCount(char arr[]);
 bool isSolvable(char puzzle[3][3]);
 bool verify_input(char in[][3]);
@@ -104,8 +107,67 @@ bool goal_check(state* s)
 	return true;
 }
 
+
+
+
+
+//linear conflict
+int H4(char arr[][3])
+{
+	int dist = 0;
+	for(int i = 0; i < 3; i++)
+	{
+		for(int j = 0; j < 3; j++)
+		{
+			for(int k = j +1; k < 3; k++)
+			{
+
+				if(arr[i][j] != '-' && arr[i][k] != '-')
+				{
+					if(present_in_row(GOAL.board,arr[i][j]) ==  present_in_row(GOAL.board,arr[i][k]) && find_char(GOAL.board,arr[i][j]).second > find_char(GOAL.board,arr[i][k]).second)
+					dist ++;
+			    }
+			}
+		}
+		
+	}
+	return dist;
+}
+
+
+
+
+
+
+
+//naive h = 0
+
+int H1(char arr[][3])
+{
+	return 0;
+}
+
+//number of tiles out of row and column
+int H2(char arr[][3])
+{
+	int dist = 0;
+	for(int i = 0; i < 3; i++)
+	{
+		for(int j = 0; j < 3; j++)
+		{
+			if(arr[i][j] != '-')
+			{
+				if(i != find_char(GOAL.board,arr[i][j]).first) dist++;
+				if(j != find_char(GOAL.board,arr[i][j]).second) dist++;
+
+			}
+		}
+	}
+	return dist;
+}
+
 //manhattan distance
-int set_h_index(char arr[][3])
+int H3(char arr[][3])
 {
 	//return 0;
 	int dist = 0;
@@ -130,79 +192,19 @@ int set_h_index(char arr[][3])
 }
 
 
-
-
-//linear conflict
-// int set_h_index(char arr[][3])
-// {
-// 	int dist = 0;
-// 	for(int i = 0; i < 3; i++)
-// 	{
-// 		for(int j = 0; j < 3; j++)
-// 		{
-// 			for(int k = j +1; k < 3; k++)
-// 			{
-
-// 				if(arr[i][j] != '-' && arr[i][k] != '-')
-// 				{
-// 					if(present_in_row(GOAL.board,arr[i][j]) ==  present_in_row(GOAL.board,arr[i][k]) && find_char(GOAL.board,arr[i][j]).second > find_char(GOAL.board,arr[i][k]).second)
-// 					dist ++;
-// 			    }
-// 			}
-// 		}
-		
-// 	}
-// 	return dist;
-// }
-
-//number of tiles out of row and column
-// int set_h_index(char arr[][3])
-// {
-// 	int dist = 0;
-// 	for(int i = 0; i < 3; i++)
-// 	{
-// 		for(int j = 0; j < 3; j++)
-// 		{
-// 			if(arr[i][j] != '-')
-// 			{
-// 				if(i != find_char(GOAL.board,arr[i][j]).first) dist++;
-// 				if(j != find_char(GOAL.board,arr[i][j]).second) dist++;
-
-// 			}
-// 		}
-// 	}
-// 	return dist;
-// }
-
-
-
-
-
-
-//naive h = 0
-
-// int set_h_index(char arr[][3])
-// {
-// 	return 0;
-// }
-
 //misplaced tiles
-// int set_h_index(char arr[][3])
+// int H4(char arr[][3])
 // {
-// 	int k = 1;
-// 	int l = 0;
-// 	for(int i=0;i<3;i++)
-// 	{
-// 		for(int j=0;j<3;j++)
-// 		{
-// 			if(!(i == 2 && j == 2))
-// 			{
-// 				if(arr[i][j] != k - '0') l++;
-// 			}
-// 			k++;
+	
+// 	int cost = 0;
+// 	for(int i = 0; i < 3; i++){
+// 		for(int j = 0; j < 3; j++){
+// 			if(( arr[i][j]!=(3*i+j+1)+'0')  && arr[i][j] != '-')
+// 				cost++;
 // 		}
 // 	}
-// 	return l;
+// 	return cost;
+
 // }
 
 bool possibility_checker(int i, int j)
@@ -211,7 +213,7 @@ bool possibility_checker(int i, int j)
 	else return false;
 }
 
-state * set_initial(char in[][3])
+state * set_initial(char in[][3],int (*H)(char[3][3]))
 {
 	int i,j;
 	state * INITIAL = new state();
@@ -225,7 +227,7 @@ state * set_initial(char in[][3])
 	}
 
 	INITIAL -> g_index = 0;
-	INITIAL -> h_index = set_h_index(in);
+	INITIAL -> h_index = H(in);
 	INITIAL -> f_index = INITIAL -> g_index + INITIAL -> h_index; 
 	INITIAL -> parent = NULL;
 	return INITIAL;
@@ -249,7 +251,7 @@ pair<int,int> find_dash(char arr[][3])
     return dash;
 }
 
-state * new_state(int x_,int y_,state * immparent)
+state * new_state(int x_,int y_,state * immparent,int (*H)(char[3][3]))
 {
 	pair<int,int> dash;
 	dash = find_dash(immparent -> board);
@@ -264,7 +266,7 @@ state * new_state(int x_,int y_,state * immparent)
 	}
 	swap(s -> board[dash.first][dash.second], s -> board[x_][y_]);
 	s -> g_index = (immparent -> g_index)+1;
-	s -> h_index = set_h_index(s -> board);
+	s -> h_index = H(s -> board);
 	s -> f_index = s -> g_index + s -> h_index;
 	s -> parent = immparent;
 
@@ -321,16 +323,16 @@ void printStack(stack <state, vector<state > > path)
 	return;
 }
 
-int ida_star(char arr[][3])
+int ida_star(char arr[][3],int (*H)(char[3][3]))
 {
-	int bound = set_h_index(arr);
+	int bound = H(arr);
 	stack <state, vector<state > > path;
-	state * root = set_initial(arr);
+	state * root = set_initial(arr,H);
 	path.push(*root);
 
 	while(true)
 	{
-		int t = search(&path,0,&bound);
+		int t = search(&path,0,&bound,H);
 		if(t == -1)
 		{
 			printStack(path);
@@ -341,11 +343,11 @@ int ida_star(char arr[][3])
 	}
 }
 
-int search(stack <state, vector<state > > *path, int g, int *bound)
+int search(stack <state, vector<state > > *path, int g, int *bound,int (*H)(char[3][3]))
 {
 	state* node = new state();
 	*node = (*path).top();
-	int f = g + set_h_index(node -> board);
+	int f = g + H(node -> board);
 	if(f > *bound) return f;
 	if(goal_check(node)) return -1;
 
@@ -363,12 +365,12 @@ int search(stack <state, vector<state > > *path, int g, int *bound)
 		{
 			//cout << dash.first + row[i] << " " << dash.second + col[i] << endl;
 			state * child = new state();
-			child = new_state(dash.first + row[i],dash.second + col[i],node);
+			child = new_state(dash.first + row[i],dash.second + col[i],node,H);
 			int pathcheck = check_path(*path,child -> board);
 			if(pathcheck == -1)
 			{
 				(*path).push(*child);
-				int t = search(path,g+1,bound);
+				int t = search(path,g+1,bound,H);
 				if(t == -1)return -1;
 				if(t < min) min = t;
 				(*path).pop();
@@ -433,8 +435,8 @@ int main()
 	int i,j;
 	char arr[9];
 	ofstream myfile;
-	myfile.open ("manhattanIDAstar.txt");
-	int noofinput = 2;
+	myfile.open ("IDAstar.txt");
+	int noofinput = 1;
 	char a;
 
 	ifstream fin("test.txt");
@@ -472,13 +474,12 @@ int main()
 		// pair<int,int> dash;
 		// dash = find_dash(in);
 
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	 	clock_t begin = clock();
-		int z = ida_star(in);
+		int z = ida_star(in,H1);
 		clock_t end = clock();
 
-		
-	  	
-	  	myfile << "=============================" <<endl;
+	  	myfile << "=========using h = 0=============" <<endl;
 	  	for(int row = 0; row < 3; row++)
 	  	{
 	  		for(int col = 0; col < 3; col++)
@@ -494,10 +495,88 @@ int main()
 	    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 	    myfile << "time elapsed " << elapsed_secs << " seconds" << endl;
 	    myfile << "=============================" <<endl;
+	    number_of_iterations = 0;
+		path_length = 0;
+
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		begin = clock();
+		z = ida_star(in,H2);
+	    end = clock();
+
+	  	myfile << "==========number of tiles out of row and column=============" <<endl;
+	  	for(int row = 0; row < 3; row++)
+	  	{
+	  		for(int col = 0; col < 3; col++)
+	  		{
+	  			myfile << in[row][col] << " ";
+	  		}
+	  		myfile<<endl;
+	  	}
+	  	myfile<<endl;
+	  	myfile<< "expanded " <<  number_of_iterations << endl;
+	    myfile << "path length " <<  path_length - 1 << endl;
+
+	    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+	    myfile << "time elapsed " << elapsed_secs << " seconds" << endl;
+	    myfile << "=============================" <<endl;
+	    number_of_iterations = 0;
+		path_length = 0;
+
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		begin = clock();
+		z = ida_star(in,H3);
+		end = clock();
+
+	  	myfile << "=========manhattan=============" <<endl;
+	  	for(int row = 0; row < 3; row++)
+	  	{
+	  		for(int col = 0; col < 3; col++)
+	  		{
+	  			myfile << in[row][col] << " ";
+	  		}
+	  		myfile<<endl;
+	  	}
+	  	myfile<<endl;
+	  	myfile<< "expanded " <<  number_of_iterations << endl;
+	    myfile << "path length " <<  path_length - 1 << endl;
+
+	    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+	    myfile << "time elapsed " << elapsed_secs << " seconds" << endl;
+	    myfile << "=============================" <<endl;
+	    number_of_iterations = 0;
+		path_length = 0;
+
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		begin = clock();
+		z = ida_star(in,H4);
+		end = clock();
+
+	  	myfile << "==========misplaced tiles============" <<endl;
+	  	for(int row = 0; row < 3; row++)
+	  	{
+	  		for(int col = 0; col < 3; col++)
+	  		{
+	  			myfile << in[row][col] << " ";
+	  		}
+	  		myfile<<endl;
+	  	}
+	  	myfile<<endl;
+	  	myfile<< "expanded " <<  number_of_iterations << endl;
+	    myfile << "path length " <<  path_length - 1 << endl;
+
+	    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+	    myfile << "time elapsed " << elapsed_secs << " seconds" << endl;
+	    myfile << "=============================" <<endl;
+	    number_of_iterations = 0;
+		path_length = 0;
+
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	    fin.get(a);
-		number_of_iterations = 0;
-		path_length = 0;
+		
 		}
 		
 	}
